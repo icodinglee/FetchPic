@@ -49,13 +49,14 @@ function getpic(cnodeUrl){
       ep.after('topic_html', topicUrls.length, function (topics) {
         topics.forEach((e,i)=>{
           downloads(e)
+          console.log("download" + i)
         })
       });
 
       topicUrls.forEach(function (topicUrl) {
         superagent.get(topicUrl)
           .end(function (err, res) {
-            console.log('fetch ' + topicUrl + ' successful');
+            //console.log('fetch ' + topicUrl + ' successful');
             ep.emit('topic_html', topicUrl );
           });
       });
@@ -63,26 +64,27 @@ function getpic(cnodeUrl){
 }
 
 var picUrls=[];
-for(var i=2;i<50;i++){
+for(var i=2;i<3;i++){
   picUrls.push(cnodeUrls+"index_"+i+".html")
 }
 
-function getPIC(){
+function getPic(){
   picUrls.forEach(function(picurl){
     getpic(picurl)
   })
 }
 //getpic(cnodeUrls)
 
-function zipfile(){
-  var zip = new adm_zip();
-  zip.addLocalFolder('pic');
-  zip.writeZip('pic.zip');
-  console.log(123)
+function zipFile(){
+  console.log("star zip....")
+  var zip = new AdmZip();
+  zip.addLocalFolder('./pic');
+  zip.writeZip('pic.zip')
+  console.log("zip success...")
 }
 
 async.series([
-  getPIC,zipfile
+  getPic,zipFile
 ], function(err, results) {
   console.log(err)
 });
