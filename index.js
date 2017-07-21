@@ -4,11 +4,16 @@ var cp=require('child_process');
 var eventproxy = require('eventproxy');
 var superagent = require('superagent');
 var cheerio = require('cheerio');
-var async = require('async');
-var adm_zip = require('adm-zip');
+var AdmZip = require('adm-zip');
 
 var DOWNLOAD_DIR='./pic';
 var cnodeUrls = 'http://www.woyaogexing.com/tupian/weimei/';
+// get all urls
+var picUrls=[];
+for(var i=2;i<3;i++){
+  picUrls.push(cnodeUrls+"index_"+i+".html")
+}
+
 
 
 function downloads(file_url){
@@ -20,7 +25,7 @@ function downloads(file_url){
         });
         curl.stdout.on('end',function(data){
                 file.end();
-        //console.log(filename+'downloaded to'+DOWNLOAD_DIR);
+        console.log(filename+'downloaded to'+DOWNLOAD_DIR);
         });
 
         curl.on('exit',function(code){
@@ -49,7 +54,6 @@ function getpic(cnodeUrl){
       ep.after('topic_html', topicUrls.length, function (topics) {
         topics.forEach((e,i)=>{
           downloads(e)
-          console.log("download" + i)
         })
       });
 
@@ -63,18 +67,16 @@ function getpic(cnodeUrl){
     });
 }
 
-var picUrls=[];
-for(var i=2;i<3;i++){
-  picUrls.push(cnodeUrls+"index_"+i+".html")
-}
+
+
 
 function getPic(){
   picUrls.forEach(function(picurl){
     getpic(picurl)
   })
 }
-//getpic(cnodeUrls)
 
+// commpress pic folder
 function zipFile(){
   console.log("star zip....")
   var zip = new AdmZip();
@@ -83,8 +85,6 @@ function zipFile(){
   console.log("zip success...")
 }
 
-async.series([
-  getPic,zipFile
-], function(err, results) {
-  console.log(err)
-});
+// result
+getPic()
+setTimeout(zipFile,10000)
