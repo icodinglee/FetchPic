@@ -15,6 +15,7 @@
     "child_process": "^1.0.2",
     "eventproxy": "^1.0.0",
     "fs": "0.0.1-security",
+    "nodemailer": "^4.6.2",
     "superagent": "^3.5.2"
   }
 }

@@ -17,6 +17,7 @@ for(var i = 2; i < 10;i++){
 
 // 根据图片url进行下载
 function downloads(file_url){
+    return new Promise((reslove, reject)=>{
         var filename = url.parse(file_url).pathname.split('/').pop();
         var file = fs.createWriteStream(`pic/${filename}`);
         var curl = cp.spawn('curl',[file_url]);   
@@ -26,61 +27,59 @@ function downloads(file_url){
         });
         curl.stdout.on('end',function(data){
             file.end();
-            console.log(filename + 'downloaded to' + DOWNLOAD_DIR);
+            reslove(1);
         });
 
         curl.on('exit',function(code){
             if(code!=0){
-               console.log('Failed:' + code);
+                reject(1);
             }
         });
+    });
 };
 
 // 获取当前页面下的所有url
 function getpic(cnodeUrl){
-  superagent.get(cnodeUrl)
-    .end(function (err, res) {
-      if (err) {
-        return console.error(err);
-      }
-      var topicUrls = [];
-      var $ = cheerio.load(res.text);
-
-      $('.lazy').each(function (idx, element) {
-        var $element = $(element);
-        var href = url.resolve(cnodeUrl, $element.attr('src'));
-        topicUrls.push(href);
-      });
-      
-      return topicUrls;
-      // var ep = new eventproxy();
-
-      // ep.after('topic_html', topicUrls.length, function (topics) {
-      //   topics.forEach((e,i)=>{
-      //    // downloads(e)
-      //   })
-      // });
-
-      // topicUrls.forEach(function (topicUrl) {
-      //   superagent.get(topicUrl)
-      //     .end(function (err, res) {
-      //       console.log('fetch ' + topicUrl + ' successful');
-      //       ep.emit('topic_html', topicUrl );
-      //     });
-      // });
-    });
+    return new Promise((reslove, reject)=>{
+        superagent.get(cnodeUrl)
+        .end(function (err, res) {
+          if (err) {
+            return console.error(err);
+          }
+          var topicUrls = [];
+          var $ = cheerio.load(res.text);
+    
+          $('.lazy').each(function (idx, element) {
+            var $element = $(element);
+            var href = url.resolve(cnodeUrl, $element.attr('src'));
+            topicUrls.push(href);
+          });
+          reslove(topicUrls);
+        });
+    })
 }
 
 // 开始下载
-function getPic(){
+async function getPic(){
   let  topicUrls = [];
-  picUrls.forEach(function(picurl){ // picurl --> http://www.woyaogexing.com/tupian/weimei/index_2.html    
-    getpic(picurl)
+  for(let picurl of picUrls){
+    let result = await getpic(picurl);
+    topicUrls = [...topicUrls, ...result];
+  }
+
+  let promises = [];
+  topicUrls.forEach((url)=>{
+      promises.push(downloads(url));
+  })
+  Promise.all(promises).then(data=>{
+     setTimeout(()=> {
+        zipFile();
+     }, 3000)
   })
 }
 
-// 压缩图片文件夹
-function zipFile(){
+// 压缩图片
+function zipFile(callback){
   console.log("star zip....")
   var zip = new AdmZip();
   zip.addLocalFolder('./pic');
@@ -88,5 +87,5 @@ function zipFile(){
   console.log("zip success...")
 }
 
-// result
+// 执行下载文件操作！
 getPic();
