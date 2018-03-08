@@ -1,17 +1,17 @@
-var url=require('url');
-var fs=require('fs');
-var cp=require('child_process');
-var eventproxy = require('eventproxy');
+var url = require('url');
+var fs = require('fs');
+var cp = require('child_process');
 var superagent = require('superagent');
 var cheerio = require('cheerio');
-var AdmZip = require('adm-zip');
+var archiver = require('archiver');
+var sendEmail = require ('./sendEmail.js');
 
 var DOWNLOAD_DIR='./pic';
 var cnodeUrls = 'http://www.woyaogexing.com/tupian/weimei/';
 
 // 获取所有的url
 var picUrls=[];
-for(var i = 2; i < 10;i++){
+for(var i = 2; i < 80; i++){
   picUrls.push(cnodeUrls + "index_" + i + ".html");
 }
 
@@ -20,17 +20,17 @@ function downloads(file_url){
     return new Promise((reslove, reject)=>{
         var filename = url.parse(file_url).pathname.split('/').pop();
         var file = fs.createWriteStream(`pic/${filename}`);
-        var curl = cp.spawn('curl',[file_url]);   
+        var curl = cp.spawn('curl', [file_url]);   
 
-        curl.stdout.on('data',function(data){
+        curl.stdout.on('data', function(data){
             file.write(data);
         });
-        curl.stdout.on('end',function(data){
+        curl.stdout.on('end', function(data){
             file.end();
             reslove(1);
         });
 
-        curl.on('exit',function(code){
+        curl.on('exit', function(code){
             if(code!=0){
                 reject(1);
             }
@@ -73,19 +73,35 @@ async function getPic(){
   })
   Promise.all(promises).then(data=>{
      setTimeout(()=> {
-        zipFile();
+        zipFloder(()=>{
+            sendEmail();
+        });
      }, 3000)
   })
 }
 
 // 压缩图片
-function zipFile(callback){
+function zipFloder(callback){
   console.log("star zip....")
-  var zip = new AdmZip();
-  zip.addLocalFolder('./pic');
-  zip.writeZip('pic.zip')
-  console.log("zip success...")
+  var output = fs.createWriteStream('target.zip');
+  var archive = archiver('zip');
+  
+  output.on('close', function () {
+      console.log(archive.pointer() + ' total bytes');
+      console.log('archiver has been finalized and the output file descriptor has closed.');
+  });
+  
+  archive.on('error', function(err){
+      throw err;
+  });
+  
+  archive.pipe(output);
+  archive.glob("./pic/*")
+  archive.finalize();
+  console.log("压缩成功！")
+  callback();
 }
+
 
 // 执行下载文件操作！
 getPic();

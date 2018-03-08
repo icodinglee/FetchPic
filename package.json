@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "adm-zip": "^0.4.7",
+    "archiver": "^2.1.1",
     "async": "^2.5.0",
     "cheerio": "^1.0.0-rc.2",
     "child_process": "^1.0.2",
