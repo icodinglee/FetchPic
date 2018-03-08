@@ -5,4 +5,4 @@
 - 将压缩文件发送到指定邮箱
 
 #### 项目启动
-> node iindex
+> node iindex.js
